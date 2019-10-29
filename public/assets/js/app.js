@@ -54,7 +54,7 @@ $(document).ready(function () {
 
     userData = {"id" : id}
     currentURL ="";
-    $.post(currentURL + "/save/article", userData, function (data) {
+    $.post(currentURL + "/save-article", userData, function (data) {
       if (data.saved) {
         // Run the initPage function again. This will reload the entire list of articles
         initPage();

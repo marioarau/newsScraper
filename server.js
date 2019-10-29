@@ -24,6 +24,11 @@ var app = express();
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 app.use(express.static(path.join(__dirname, '/public')))
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.text());
+app.use(bodyParser.json({ type: 'application/vnd.api+json' }));
+
 app.get('/', function (req, res) {
   res.render('index');
 });
@@ -39,31 +44,6 @@ app.get('/', function (req, res) {
 mongoose.connect("mongodb://localhost/newsScraper", { useNewUrlParser: true });
 
 // Routes
-
-// Route for saving an Article
-app.post('/save/article', function (req, res) {
-  console.log(req.body);
-  return false;
-  //console.log(JSON.stringify(req.body));
-  var id = req.body.id;
-  console.log("Entering route for /save/article/"+id);
-  db.ArticleTemp.findOne({ _id: id }, function (req, res) {
-    var result = {};
-    result.title = req.param.title;
-    result.link = req.param.link;
-    db.Article.create(result)
-      .then(function (dbArticle) {
-        // View the added result in the console
-        console.log("inserted article into db: ", dbArticle);
-        db.ArticleTemp.deleteOne({ _id: id });
-        console.log("deleted article from ArticleTemp collection");
-      })
-      .catch(function (err) {
-        // If an error occurred, log it
-        console.log("article create: ", err);
-      });
-  });
-});
 
 // Route for deleting all Articles from the from the Articles Collection
 app.get("/articles/delete", function (req, res) {
@@ -203,6 +183,32 @@ app.get("/articles/:id", function (req, res) {
       // If an error occurred, send it to the client
       res.json(err);
     });
+});
+
+// Route for saving an Article
+app.post('/save-article', function (req, res) {
+  //console.log(JSON.stringify(req.body));
+  var id = req.body.id;
+  console.log("Entering route for /save/article/"+id);
+  db.ArticleTemp.findOne({ _id: id }, function (req, res) {
+    //console.log(req.body);
+    console.log(res);
+    //console.log(req.param);
+    var result = {};
+    result.title = res.title;
+    result.link = res.link;
+    db.Article.create(result)
+      .then(function (dbArticle) {
+        // View the added result in the console
+        console.log("inserted article into db: ", dbArticle);
+        db.ArticleTemp.deleteOne({ _id: id });
+        console.log("deleted article from ArticleTemp collection");
+      })
+      .catch(function (err) {
+        // If an error occurred, log it
+        console.log("article create: ", err);
+      });
+  });
 });
 
 // Route for saving/updating an Article's associated Note
