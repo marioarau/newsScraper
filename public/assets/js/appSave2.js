@@ -49,12 +49,17 @@ $(document).ready(function () {
     // Using a patch method to be semantic since this is an update to an existing record in our collection
     console.log("making AJAX call to save article from page");
     console.log("articleToSave: ", articleToSave);
-    id = articleToSave._id;
-    console.log("id: ", id);
 
-    userData = {"id" : id}
-    currentURL ="";
+    userData = {"id" : articleToSave._id}
     $.post(currentURL + "/save/article", userData, function (data) {
+
+    $.ajax({
+      method: "POST",
+      //url: "/save/article/" + articleToSave._id,
+      url: "/save/article/",
+      data: {"id" : articleToSave._id}
+    }).then(function (data) {
+      // If the data was saved successfully
       if (data.saved) {
         // Run the initPage function again. This will reload the entire list of articles
         initPage();

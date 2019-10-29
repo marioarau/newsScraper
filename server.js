@@ -1,7 +1,7 @@
 var path = require("path");
 var express = require("express");
+var bodyParser = require("body-parser");
 var exphbs = require('express-handlebars');
-//var logger = require("morgan");
 var mongoose = require("mongoose");
 
 // Our scraping tools
@@ -21,7 +21,6 @@ var app = express();
 // Configure middleware
 
 // Set Handlebars.
-
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 app.use(express.static(path.join(__dirname, '/public')))
@@ -41,11 +40,36 @@ mongoose.connect("mongodb://localhost/newsScraper", { useNewUrlParser: true });
 
 // Routes
 
+// Route for saving an Article
+app.post('/save/article', function (req, res) {
+  console.log(req.body);
+  return false;
+  //console.log(JSON.stringify(req.body));
+  var id = req.body.id;
+  console.log("Entering route for /save/article/"+id);
+  db.ArticleTemp.findOne({ _id: id }, function (req, res) {
+    var result = {};
+    result.title = req.param.title;
+    result.link = req.param.link;
+    db.Article.create(result)
+      .then(function (dbArticle) {
+        // View the added result in the console
+        console.log("inserted article into db: ", dbArticle);
+        db.ArticleTemp.deleteOne({ _id: id });
+        console.log("deleted article from ArticleTemp collection");
+      })
+      .catch(function (err) {
+        // If an error occurred, log it
+        console.log("article create: ", err);
+      });
+  });
+});
+
 // Route for deleting all Articles from the from the Articles Collection
 app.get("/articles/delete", function (req, res) {
   // Grab every document in the Articles collection
-  db.Article.remove( { } )
-  .then(function () {
+  db.Article.remove({})
+    .then(function () {
       console.log("Articles Deleted. Calling render index")
       // If we were able to successfully find Articles, send them back to the client
       res.render('index', {
@@ -66,7 +90,6 @@ app.get("/scrape", function (req, res) {
     var $ = cheerio.load(response.data);
 
     // Now, we grab every h2 within an article tag, and do the following:
-    //$(".ljn-nota-imagen-img").each(function(i, element) {
     $(".ljn-title-listado").each(function (i, element) {
       // Save an empty result object
       var result = {};
@@ -83,11 +106,11 @@ app.get("/scrape", function (req, res) {
       db.ArticleTemp.create(result)
         .then(function (dbArticle) {
           // View the added result in the console
-          console.log("inserting into Temp db: ",dbArticle);
+          console.log("inserting into Temp db: ", dbArticle);
         })
         .catch(function (err) {
           // If an error occurred, log it
-          console.log("articleTemp create: ",err);
+          console.log("articleTemp create: ", err);
         });
     });
 
@@ -105,7 +128,7 @@ app.get("/scrape", function (req, res) {
         //res.json(dbArticle);
       }).catch(function (err) {
         // If an error occurred, send it to the client
-        res.json(err);
+        res.json("error rendering the page: ", JSON.stringify(err));
       });
 
   }).catch(function (err) {
@@ -114,6 +137,39 @@ app.get("/scrape", function (req, res) {
     console.log("scrape error: ", err);
     res.send(err);
   });
+});
+
+// Route for getting all Articles from the db
+app.get("/headlines", function (req, res) {
+  // Grab every document in the Articles collection
+  db.ArticleTemp.find()
+    .then(function (dbArticles) {
+      // If we were able to successfully find Articles, send them back to the client
+      res.render('index', {
+        scrapeComplete: true,
+        dbArticles: dbArticles
+      });
+      //res.json(dbArticle);
+    }).catch(function (err) {
+      // If an error occurred, send it to the client
+      res.json(err);
+    });
+});
+
+// Route for getting all Articles from the db
+app.get("/viewscraped", function (req, res) {
+  // Grab every document in the Articles collection
+  db.ArticleTemp.find()
+    .then(function (dbArticles) {
+      // If we were able to successfully find Articles, send them back to the client
+      res.render('index', {
+        dbArticles: dbArticles
+      });
+      //res.json(dbArticle);
+    }).catch(function (err) {
+      // If an error occurred, send it to the client
+      res.json(err);
+    });
 });
 
 // Route for getting all Articles from the db
