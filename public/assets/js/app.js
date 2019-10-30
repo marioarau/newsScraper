@@ -29,9 +29,9 @@ $(document).ready(function () {
     var currentArticle = $(this)
       .parents(".card")
       .data();
-    console.log("entering handleArticleNotes",currentArticle._id);
+    console.log("entering handleArticleNotes", currentArticle._id);
     // Grab any notes with this headline/article id
-    $.get("articles/" + currentArticle._id).then(function(data) {
+    $.get("articles/" + currentArticle._id).then(function (data) {
       // Constructing our initial HTML to add to the notes modal
       var modalText = $("<div class='container-fluid text-center'>").append(
         $("<h4>").text("Notes For Article: " + currentArticle._id),
@@ -40,24 +40,79 @@ $(document).ready(function () {
         $("<textarea placeholder='New Note' rows='4' cols='60'>"),
         $("<button class='btn btn-success save'>Save Note</button>")
       );
+      console.log("data: ", data);
       console.log("loading boot box modal");
       // Adding the formatted HTML to the note modal
-      bootbox.dialog({
-        message: modalText,
-        closeButton: true
-      });
+                          // Show the modal with the best match
+      $("#notesModal").modal('toggle');
+
+      console.log("after boot box modal");
       var noteData = {
         _id: currentArticle._id,
         notes: data || []
       };
-      // Adding some information about the article and article notes to the save button for easy access
-      // When trying to add a new note
+
+      // Adding some information about the article and article notes to 
+      // the save button for easy access When trying to add a new note
       $(".btn.save").data("article", noteData);
-      // renderNotesList will populate the actual note HTML inside of the modal we just created/opened
+      // renderNotesList will populate the actual note HTML inside of 
+      // the modal we just created/opened
+      console.log("calling renderNotesList");
       renderNotesList(noteData);
     });
   }
-  
+
+  function renderNotesList(data) {
+    // This function handles rendering note list items to our notes modal
+    // Setting up an array of notes to render after finished
+    // Also setting up a currentNote variable to temporarily store each note
+    console.log("entering renderNotesList")
+    var notesToRender = [];
+    var currentNote;
+    if (!data.notes.length) {
+      // If we have no notes, just display a message explaining this
+      currentNote = $("<li class='list-group-item'>No notes for this article yet.</li>");
+      notesToRender.push(currentNote);
+    } else {
+      // If we do have notes, go through each one
+      for (var i = 0; i < data.notes.length; i++) {
+        // Constructs an li element to contain our noteText and a delete button
+        currentNote = $("<li class='list-group-item note'>")
+          .text(data.notes[i].noteText)
+          .append($("<button class='btn btn-danger note-delete'>x</button>"));
+        // Store the note id on the delete button for easy access when trying to delete
+        currentNote.children("button").data("_id", data.notes[i]._id);
+        // Adding our currentNote to the notesToRender array
+        notesToRender.push(currentNote);
+      }
+    }
+    // Now append the notesToRender to the note-container inside the note modal
+    $(".note-container").append(notesToRender);
+  }
+
+  function handleArticleDelete() {
+    // This function handles deleting articles/headlines
+    // We grab the id of the article to delete from the card element the delete button sits inside
+    var articleToDelete = $(this)
+      .parents(".card")
+      .data();
+
+    // Remove card from page
+    $(this)
+      .parents(".card")
+      .remove();
+    // Using a delete method here just to be semantic since we are deleting an article/headline
+    $.ajax({
+      method: "DELETE",
+      url: "/api/headlines/" + articleToDelete._id
+    }).then(function (data) {
+      // If this works out, run initPage again which will re-render our list of saved articles
+      if (data.ok) {
+        initPage();
+      }
+    });
+  }
+
   function handleArticleClear() {
     $.get("/articles/delete").then(function () {
       $(".article-container").empty();
@@ -88,8 +143,8 @@ $(document).ready(function () {
     id = articleToSave._id;
     console.log("id: ", id);
 
-    userData = {"id" : id}
-    currentURL ="";
+    userData = { "id": id }
+    currentURL = "";
     $.post(currentURL + "/save-article", userData, function (data) {
       if (data.saved) {
         // Run the initPage function again. This will reload the entire list of articles
