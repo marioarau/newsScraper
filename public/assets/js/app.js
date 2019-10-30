@@ -5,6 +5,7 @@ $(document).ready(function () {
   // and "scrape new article" buttons
   var articleContainer = $(".article-container");
   $(document).on("click", ".btn.save", handleArticleSave);
+  $(document).on("click", ".btn.notes", handleArticleNotes);
   //$(document).on("click", ".scrape-new", handleArticleScrape);
   $(".clear").on("click", handleArticleClear);
 
@@ -22,6 +23,41 @@ $(document).ready(function () {
     });
   }
 
+  function handleArticleNotes(event) {
+    // This function handles opening the notes modal and displaying our notes
+    // We grab the id of the article to get notes for from the card element the delete button sits inside
+    var currentArticle = $(this)
+      .parents(".card")
+      .data();
+    console.log("entering handleArticleNotes",currentArticle._id);
+    // Grab any notes with this headline/article id
+    $.get("articles/" + currentArticle._id).then(function(data) {
+      // Constructing our initial HTML to add to the notes modal
+      var modalText = $("<div class='container-fluid text-center'>").append(
+        $("<h4>").text("Notes For Article: " + currentArticle._id),
+        $("<hr>"),
+        $("<ul class='list-group note-container'>"),
+        $("<textarea placeholder='New Note' rows='4' cols='60'>"),
+        $("<button class='btn btn-success save'>Save Note</button>")
+      );
+      console.log("loading boot box modal");
+      // Adding the formatted HTML to the note modal
+      bootbox.dialog({
+        message: modalText,
+        closeButton: true
+      });
+      var noteData = {
+        _id: currentArticle._id,
+        notes: data || []
+      };
+      // Adding some information about the article and article notes to the save button for easy access
+      // When trying to add a new note
+      $(".btn.save").data("article", noteData);
+      // renderNotesList will populate the actual note HTML inside of the modal we just created/opened
+      renderNotesList(noteData);
+    });
+  }
+  
   function handleArticleClear() {
     $.get("/articles/delete").then(function () {
       $(".article-container").empty();
