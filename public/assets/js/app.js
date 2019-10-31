@@ -10,7 +10,18 @@ $(document).ready(function () {
   $(document).on("click", ".btn.delete", handleDeleteSavedArticle);
 
   //$(document).on("click", ".scrape-new", handleArticleScrape);
+  $(".scrape").on("click", handleScrapeArticles);
   $(".clear").on("click", handleDeleteScrapedArticles);
+
+  function handleScrapeArticles() {
+    var currentArticle = $(this)
+      .parents(".card")
+      .data();
+    $.get("/scrape").then(function () {
+      //initPage();
+      console.log("Scraped articles from remote site");
+    });
+  }
 
   function handleDeleteScrapedArticles() {
     var currentArticle = $(this)
