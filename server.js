@@ -33,7 +33,6 @@ app.get('/', function (req, res) {
   res.render('index');
 });
 
-
 // Parse request body as JSON
 //app.use(express.urlencoded({ extended: true }));
 //app.use(express.json());
@@ -46,9 +45,9 @@ mongoose.connect("mongodb://localhost/newsScraper", { useNewUrlParser: true });
 // Routes
 
 // Route for deleting all Articles from the from the Articles Collection
-app.get("/articles/delete", function (req, res) {
+app.get("/articles-delete", function (req, res) {
   // Grab every document in the Articles collection
-  db.Article.remove({})
+  db.ArticleTemp.remove({})
     .then(function () {
       console.log("Articles Deleted. Calling render index")
       // If we were able to successfully find Articles, send them back to the client
@@ -170,8 +169,9 @@ app.get("/saved", function (req, res) {
 });
 
 // Route for saving/updating an Article's associated Note
-app.post("/articles/:id", function (req, res) {
+app.post("/article-note", function (req, res) {
   // Create a new note and pass the req.body to the entry
+  console.log("req.body", req.body);
   db.Note.create(req.body)
     .then(function (dbNote) {
       // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
@@ -209,11 +209,28 @@ app.get("/articles/:id", function (req, res) {
     });
 });
 
+// Route for deleting a saved Article (working on this)
+app.get('/delete-saved-article/:id', function (req, res) {
+  //console.log(JSON.stringify(req.body));
+  var id = req.params.id;
+  console.log("Entering route for /save/article/" + id);
+  db.Article.deleteOne({ _id: id }, function (req, res) {
+    console.log("deleted a saved article");
+    //res.json(dbArticle);
+  })
+    .catch(function (err) {
+      // If an error occurred, log it
+      console.log("article create: ", err);
+    });
+});
+
+
+
 // Route for saving an Article
 app.post('/save-article', function (req, res) {
   //console.log(JSON.stringify(req.body));
   var id = req.body.id;
-  console.log("Entering route for /save/article/"+id);
+  console.log("Entering route for /save/article/" + id);
   db.ArticleTemp.findOne({ _id: id }, function (req, res) {
     //console.log(req.body);
     console.log(res);

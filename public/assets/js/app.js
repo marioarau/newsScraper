@@ -5,9 +5,83 @@ $(document).ready(function () {
   // and "scrape new article" buttons
   var articleContainer = $(".article-container");
   $(document).on("click", ".btn.save", handleArticleSave);
-  $(document).on("click", ".btn.notes", handleArticleNotes);
+  $(document).on("click", ".btn.notes", handleOpenArticleNote);
+  $(document).on("click", "#saveModal", handleSaveNote);
+  $(document).on("click", ".btn.delete", handleDeleteSavedArticle);
+
   //$(document).on("click", ".scrape-new", handleArticleScrape);
-  $(".clear").on("click", handleArticleClear);
+  $(".clear").on("click", handleDeleteScrapedArticles);
+
+  function handleDeleteScrapedArticles() {
+    var currentArticle = $(this)
+      .parents(".card")
+      .data();
+    $.get("/article-delete").then(function () {
+      $(".article-container").empty();
+      initPage();
+    });
+  }
+
+  function handleDeleteSavedArticle() {
+    var articleToDelete = $(this)
+    .parents(".card")
+    .data();
+
+  // Remove card from page
+  $(this)
+    .parents(".card")
+    .remove();
+    console.log("currentArticle: ", articleToDelete);
+    console.log("entering handleDeleteSavedArticle", articleToDelete._id);
+    $.get("/delete-saved-article/" + articleToDelete._id).then(function () {
+      initPage();
+    });
+  }
+
+  function handleSaveNote() {
+
+    //noteText
+    var _id = $("#noteText").attr("data-id");
+    var link = $("#noteText").val();
+    var title = $("#modalArticleTitle").val();
+    var note = $("#noteText").val();
+
+    // Now make an ajax call for the Article
+
+    $.ajax({
+      method: "POST",
+      url: "/article-note",
+      data: {
+        "_id": _id,
+        "title": title,
+        "link": link,
+        "note": note
+      }
+    })
+      // With that done, add the note information to the page
+      .then(function (data) {
+        console.log(data);
+        // The title of the article
+        $("#notes").append("<h2>" + data.title + "</h2>");
+        // An input to enter a new title
+        $("#notes").append("<input id='titleinput' name='title' >");
+        // A textarea to add a new note body
+        $("#notes").append("<textarea id='bodyinput' name='body'></textarea>");
+        // A button to submit a new note, with the id of the article saved to it
+        $("#notes").append("<button data-id='" + data._id + "' id='savenote'>Save Note</button>");
+
+        // If there's a note in the article
+        if (data.note) {
+          // Place the title of the note in the title input
+          $("#titleinput").val(data.note.title);
+          // Place the body of the note in the body textarea
+          $("#bodyinput").val(data.note.body);
+        }
+      });
+  };
+
+
+
 
   function initPage() {
     // Run an AJAX request for any unsaved headlines
@@ -16,14 +90,15 @@ $(document).ready(function () {
       // If we have headlines, render them to the page
       if (data && data.length) {
         renderArticles(data);
-      } else {
+      }
+      else {
         // Otherwise render a message explaining we have no articles
         renderEmpty();
       }
     });
   }
 
-  function handleArticleNotes(event) {
+  function handleOpenArticleNote(event) {
     // This function handles opening the notes modal and displaying our notes
     // We grab the id of the article to get notes for from the card element the delete button sits inside
     var currentArticle = $(this)
@@ -43,22 +118,20 @@ $(document).ready(function () {
       console.log("data: ", data);
       console.log("loading boot box modal");
       // Adding the formatted HTML to the note modal
-                          // Show the modal with the best match
-      $("#notesModal").modal('toggle');
+      // Show the modal with the best match
 
-      console.log("after boot box modal");
-      var noteData = {
-        _id: currentArticle._id,
-        notes: data || []
-      };
+      console.log("data.title: ", data.title);
+      $("#modalArticleTitle").html(data.title);
+      $("#modalArticleTitle").attr("data-id", data._id);
+      $("#notesModal").modal('toggle');
 
       // Adding some information about the article and article notes to 
       // the save button for easy access When trying to add a new note
-      $(".btn.save").data("article", noteData);
+      //$(".btn.save").data("article", noteData);
       // renderNotesList will populate the actual note HTML inside of 
       // the modal we just created/opened
-      console.log("calling renderNotesList");
-      renderNotesList(noteData);
+      //console.log("calling renderNotesList");
+      //renderNotesList(noteData);
     });
   }
 
@@ -113,13 +186,6 @@ $(document).ready(function () {
     });
   }
 
-  function handleArticleClear() {
-    $.get("/articles/delete").then(function () {
-      $(".article-container").empty();
-      initPage();
-    });
-  }
-
   function handleArticleSave() {
 
     console.log("entering handlArticleSave");
@@ -154,38 +220,39 @@ $(document).ready(function () {
   }
 
   // Whenever someone clicks a p tag
-  $(document).on("click", "p", function () {
-    // Empty the notes from the note section
-    $("#notes").empty();
-    // Save the id from the p tag
-    var thisId = $(this).attr("data-id");
 
-    // Now make an ajax call for the Article
-    $.ajax({
-      method: "GET",
-      url: "/articles/" + thisId
-    })
-      // With that done, add the note information to the page
-      .then(function (data) {
-        console.log(data);
-        // The title of the article
-        $("#notes").append("<h2>" + data.title + "</h2>");
-        // An input to enter a new title
-        $("#notes").append("<input id='titleinput' name='title' >");
-        // A textarea to add a new note body
-        $("#notes").append("<textarea id='bodyinput' name='body'></textarea>");
-        // A button to submit a new note, with the id of the article saved to it
-        $("#notes").append("<button data-id='" + data._id + "' id='savenote'>Save Note</button>");
-
-        // If there's a note in the article
-        if (data.note) {
-          // Place the title of the note in the title input
-          $("#titleinput").val(data.note.title);
-          // Place the body of the note in the body textarea
-          $("#bodyinput").val(data.note.body);
-        }
+  function handleArticleNotes(event) {
+    // This function handles opening the notes modal and displaying our notes
+    // We grab the id of the article to get notes for from the card element the delete button sits inside
+    var currentArticle = $(this)
+      .parents(".card")
+      .data();
+    // Grab any notes with this headline/article id
+    $.get("/api/notes/" + currentArticle._id).then(function (data) {
+      // Constructing our initial HTML to add to the notes modal
+      var modalText = $("<div class='container-fluid text-center'>").append(
+        $("<h4>").text("Notes For Article: " + currentArticle._id),
+        $("<hr>"),
+        $("<ul class='list-group note-container'>"),
+        $("<textarea placeholder='New Note' rows='4' cols='60'>"),
+        $("<button class='btn btn-success save'>Save Note</button>")
+      );
+      // Adding the formatted HTML to the note modal
+      bootbox.dialog({
+        message: modalText,
+        closeButton: true
       });
-  });
+      var noteData = {
+        _id: currentArticle._id,
+        notes: data || []
+      };
+      // Adding some information about the article and article notes to the save button for easy access
+      // When trying to add a new note
+      $(".btn.save").data("article", noteData);
+      // renderNotesList will populate the actual note HTML inside of the modal we just created/opened
+      renderNotesList(noteData);
+    });
+  }
 
   // When you click the savenote button
   $(document).on("click", "#savenote", function () {

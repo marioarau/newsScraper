@@ -12,6 +12,15 @@ body {
   margin-bottom: 0;
 }
 
+#notesModal {  
+  color: #000;
+}
+
+#modalArticleTitle {  
+  color: #000;
+
+}
+
 .jumbotron {
   position: relative;
   width: 100%;

@@ -67,15 +67,14 @@
 		<!-- Modal content-->
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">X</button>
 				<h2 class="modal-title"><strong>Article Note</strong></h2>
 			</div>
 			<div class="modal-body">
-				<h2 id="friendName">Mario Araujo</h2>
-				<img id="friendPic" src="http://marioaraujo.com/full-stack-class/assets/images/mario_araujo.jpg" alt=""
-					height="350" width="300">
+				<h2 id="modalArticleTitle"></h2>
+				<textarea id="noteText" data-id="" class="form-control"></textarea>
 			</div>
 			<div class="modal-footer">
+				<button type="button" class="btn btn-default" id="saveModal">Save</button>
 				<button type="button" class="btn btn-default" id="closeModal" data-dismiss="modal">Close</button>
 			</div>
 		</div>
