@@ -6,3 +6,9 @@
 
 This node.js program scrapes a Mexico City Newspaper and put the data in an ArticleTemp MongoDB collection.  The Scraped Articles can be 
 seen by clicking on the View Scraped Articles Menu Item.  In this option you can save articles to another MongoDB collection Article.  Where you then have the option to make a note or delete the article at some later time.
+
+After you scrape new articles, there is an option to clear the scraped articles.
+
+The save a note on an article was not completed yet.
+
+
